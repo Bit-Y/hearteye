@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>树莓派警报接收页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .msg-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            min-height: 300px;
+            border: 1px solid #ddd;
+        }
+        .alarm-msg {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        .system-msg {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>树莓派警报监控</h1>
+    <!-- 连接状态显示 -->
+    <div class="status disconnected" id="connectionStatus">
+        未连接到服务器
+    </div>
+    <!-- 消息展示区域 -->
+    <div class="msg-container" id="messageContainer">
+        <div class="system-msg">等待连接到树莓派WebSocket服务器...</div>
+    </div>
+
+    <script>
+        // 配置WebSocket服务器地址（替换为你的树莓派IP）
+        const WS_SERVER_URL = 'ws://192.168.137.239:8765';
+        let websocket;
+
+        // 获取页面元素
+        const statusElement = document.getElementById('connectionStatus');
+        const msgContainer = document.getElementById('messageContainer');
+
+        // 添加消息到页面
+        function addMessage(text, isAlarm = false) {
+            const msgElement = document.createElement('div');
+            msgElement.className = isAlarm ? 'alarm-msg' : 'system-msg';
+            // 添加时间戳
+            const time = new Date().toLocaleString();
+            msgElement.textContent = `[${time}] ${text}`;
+            msgContainer.appendChild(msgElement);
+            // 滚动到最新消息
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+
+        // 初始化WebSocket连接
+        function initWebSocket() {
+            // 创建WebSocket实例
+            websocket = new WebSocket(WS_SERVER_URL);
+
+            // 连接成功回调
+            websocket.onopen = function() {
+                statusElement.className = 'status connected';
+                statusElement.textContent = '已成功连接到树莓派服务器';
+                addMessage('WebSocket连接已建立');
+            };
+
+            // 接收消息回调（核心：处理警报消息）
+            websocket.onmessage = function(event) {
+                try {
+                    // 解析JSON格式的消息
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'alarm') {
+                        // 警报消息，高亮显示
+                        addMessage(data.msg, true);
+                        // 可选：添加浏览器通知（需用户授权）
+                        if (Notification.permission === 'granted') {
+                            new Notification('警报提醒', { body: data.msg });
+                        } else if (Notification.permission !== 'denied') {
+                            Notification.requestPermission();
+                        }
+                    }
+                } catch (e) {
+                    // 非JSON格式消息，直接展示
+                    addMessage(`收到未知消息：${event.data}`);
+                }
+            };
+
+            // 连接关闭回调
+            websocket.onclose = function() {
+                statusElement.className = 'status disconnected';
+                statusElement.textContent = '与服务器的连接已断开';
+                addMessage('WebSocket连接已关闭，5秒后尝试重连...');
+                // 自动重连
+                setTimeout(initWebSocket, 5000);
+            };
+
+            // 连接错误回调
+            websocket.onerror = function(error) {
+                addMessage(`WebSocket错误：${error.message}`);
+            };
+        }
+
+        // 页面加载完成后初始化连接
+        window.onload = function() {
+            // 请求通知权限（可选）
+            if (Notification.permission !== 'granted') {
+                Notification.requestPermission();
+            }
+            initWebSocket();
+        };
+    </script>
+</body>
+</html>
