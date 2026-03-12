@@ -170,6 +170,41 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
+        .btn-alarm {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-alarm:hover {
+            background-color: #c82333;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-alarm i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
         .section {
             padding: 60px 0;
         }
@@ -460,6 +495,7 @@
                 <li><a href="#resources" class="nav-link" data-page="resources">应对资源</a></li>
                 <li><a href="#about" class="nav-link" data-page="about">关于我们</a></li>
                 <li><a href="#contact" class="nav-link" data-page="contact">联系我们</a></li>
+                <li><a href="alarm_web.html" class="btn-alarm"><i class="fas fa-bell"></i>警报监控</a></li>
             </ul>
         </nav>
     </div>
@@ -471,7 +507,10 @@
         <div class="container">
             <h1>反对校园欺凌，共建和谐校园</h1>
             <p>校园欺凌对学生的身心健康造成严重伤害。让我们共同努力，创造一个安全、尊重、包容的学习环境，让每个孩子都能健康成长。</p>
-            <a href="#category" class="btn nav-link" data-page="category">了解欺凌类型</a>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a href="#category" class="btn nav-link" data-page="category">了解欺凌类型</a>
+                <a href="alarm_web.html" class="btn-alarm"><i class="fas fa-bell"></i>警报监控</a>
+            </div>
         </div>
     </div>
 
@@ -819,6 +858,7 @@
                     <li><a href="#category" class="nav-link" data-page="category">欺凌类型</a></li>
                     <li><a href="#resources" class="nav-link" data-page="resources">应对资源</a></li>
                     <li><a href="#about" class="nav-link" data-page="about">关于我们</a></li>
+                    <li><a href="alarm_web.html" style="color: #ff6b6b;"><i class="fas fa-bell"></i> 警报监控</a></li>
                 </ul>
             </div>
 
@@ -859,10 +899,19 @@
         // 导航链接点击事件
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                // 获取目标页面
+                // 检查是否是外部链接（没有data-page属性）
                 const targetPage = this.getAttribute('data-page');
+
+                // 如果没有data-page属性，则不阻止默认行为（允许跳转到外部链接）
+                if (!targetPage) {
+                    // 移动端关闭菜单
+                    if (window.innerWidth <= 768) {
+                        navLinksContainer.classList.remove('active');
+                    }
+                    return;
+                }
+
+                e.preventDefault();
 
                 // 隐藏所有页面
                 pages.forEach(page => {
@@ -926,5 +975,4 @@
     });
 </script>
 </body>
-
 </html>
